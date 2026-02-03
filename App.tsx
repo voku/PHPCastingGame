@@ -395,6 +395,21 @@ export default function App() {
             </div>
           )}
         </main>
+
+        {/* Footer */}
+        <footer className="w-full max-w-3xl mt-8 pt-4 border-t border-slate-200 dark:border-slate-700 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p>
+            Open source project •{' '}
+            <a 
+              href="https://github.com/voku/PHPCastingGame" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold transition-colors"
+            >
+              Contribute on GitHub
+            </a>
+          </p>
+        </footer>
       </div>
     </div>
   );
