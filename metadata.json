@@ -1,0 +1,5 @@
+{
+  "name": "PHP Door Fitter: Cast or Craft?",
+  "description": "A developer strategy game based on the 'Casting in PHP' blog post. Choose between hammering values to fit strict types or measuring them correctly to preserve data integrity.",
+  "requestFramePermissions": []
+}
