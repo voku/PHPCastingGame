@@ -441,5 +441,131 @@ export const LEVELS: Level[] = [
     measureScore: 200,
 
     explanation: "Object Injection: Letting user input determine class names is dangerous. Using a typed accessor like `getClassString` validates that the string exists AND implements the expected interface/parent class."
+  },
+  {
+    id: 22,
+    title: "The Empty String Trap",
+    incomingValueDisplay: "''",
+    incomingValueType: "string",
+    targetType: "int",
+    variableName: "$count",
+    contextCode: "$count = (int) $_POST['count'];",
+
+    hammerCast: "(int)",
+    hammerResultDisplay: "0",
+    hammerFeedback: "Empty string becomes 0. Is that a valid count or missing input?",
+    hammerDamage: 20,
+    hammerScore: 0,
+
+    measureAction: "Request::getInt('count')",
+    measureFeedback: "Correct. Empty input is rejected, not silently zeroed.",
+    measureScore: 150,
+
+    explanation: "State Collapse: The strings '', 'abc', null, and false all produce 0 when cast to int. Three completely different states — missing input, invalid input, and explicit zero — become indistinguishable. The program has lost the ability to tell them apart."
+  },
+  {
+    id: 23,
+    title: "The Partial Parser",
+    incomingValueDisplay: "'123abc'",
+    incomingValueType: "string",
+    targetType: "int",
+    variableName: "$quantity",
+    contextCode: "$quantity = (int) $_POST['quantity'];",
+
+    hammerCast: "(int)",
+    hammerResultDisplay: "123",
+    hammerFeedback: "Parsing stopped at 'a'. Got 123 from '123abc' — silently.",
+    hammerDamage: 35,
+    hammerScore: 0,
+
+    measureAction: "filter_var($val, FILTER_VALIDATE_INT)",
+    measureFeedback: "Correct. Returns false for '123abc'. Invalid input stays invalid.",
+    measureScore: 150,
+
+    explanation: "PHP's (int) cast reads digits from the left and stops silently at the first non-digit character. '123abc' becomes 123 without any warning. This is the hammer at work: the door fits, but the material it was made from has disappeared."
+  },
+  {
+    id: 24,
+    title: "The Zero String",
+    incomingValueDisplay: "'0'",
+    incomingValueType: "string",
+    targetType: "bool",
+    variableName: "$enabled",
+    contextCode: "$enabled = (bool) $_GET['enabled'];",
+
+    hammerCast: "(bool)",
+    hammerResultDisplay: "false",
+    hammerFeedback: "The string '0' is PHP's only non-empty falsy string — a hidden special case.",
+    hammerDamage: 45,
+    hammerScore: 0,
+
+    measureAction: "filter_var($val, FILTER_VALIDATE_BOOLEAN)",
+    measureFeedback: "Correct. Handles '0', 'false', 'off', 'no' consistently.",
+    measureScore: 150,
+
+    explanation: "PHP Boolean Surprise: '0' is the single non-empty string that PHP treats as false. Meanwhile, '0.0', 'false', and '00' are all true because they are non-empty and not equal to '0'. This asymmetry produces the most surprising bugs in form and query string handling."
+  },
+  {
+    id: 25,
+    title: "The Array Echo",
+    incomingValueDisplay: "[1, 2, 3]",
+    incomingValueType: "array",
+    targetType: "string",
+    variableName: "$items",
+    contextCode: "echo 'Total items: ' . $items;",
+
+    hammerCast: "(string)",
+    hammerResultDisplay: "\"Array\"",
+    hammerFeedback: "Your output says 'Total items: Array'. PHP emits a notice and moves on.",
+    hammerDamage: 20,
+    hammerScore: 0,
+
+    measureAction: "count($items) . ' items'",
+    measureFeedback: "Clear. Converts the array to a meaningful string representation.",
+    measureScore: 150,
+
+    explanation: "Array to String: Casting any array to a string produces the literal word 'Array', regardless of its contents. PHP emits a notice but still generates a value — the hammer always produces a door-shaped result, even when the material makes no sense."
+  },
+  {
+    id: 26,
+    title: "The Null Byte Key",
+    incomingValueDisplay: "new Example()",
+    incomingValueType: "object",
+    targetType: "array",
+    variableName: "$data",
+    contextCode: "class Example {\n  private int $a = 1;\n  protected int $b = 2;\n  public int $c = 3;\n}",
+
+    hammerCast: "(array)",
+    hammerResultDisplay: "[\"\\0Example\\0a\"=>1, \"\\0*\\0b\"=>2, \"c\"=>3]",
+    hammerFeedback: "Keys contain NUL bytes! Your serializer, logger, or JSON encoder is about to break.",
+    hammerDamage: 55,
+    hammerScore: 0,
+
+    measureAction: "get_object_vars($obj) or $obj->toArray()",
+    measureFeedback: "Safe. Returns only public properties or an explicitly defined mapping.",
+    measureScore: 150,
+
+    explanation: "Object to Array (Null Byte Keys): PHP encodes property visibility into array keys using NUL byte prefixes — \\0ClassName\\0 for private and \\0*\\0 for protected. These hidden characters silently break serializers, debuggers, and any code that manipulates the resulting array keys."
+  },
+  {
+    id: 27,
+    title: "The Object Integer",
+    incomingValueDisplay: "new stdClass()",
+    incomingValueType: "object",
+    targetType: "int",
+    variableName: "$response",
+    contextCode: "$count = (int) $apiResponse;",
+
+    hammerCast: "(int)",
+    hammerResultDisplay: "1",
+    hammerFeedback: "The entire API response object became the integer 1. All data is gone.",
+    hammerDamage: 70,
+    hammerScore: 0,
+
+    measureAction: "$apiResponse->count ?? throw new TypeError('Missing count')",
+    measureFeedback: "Correct. Access the actual property explicitly.",
+    measureScore: 200,
+
+    explanation: "Object to Integer: Because objects are always truthy, casting any object to int produces 1. The object's actual data — all its properties — is completely discarded. This silently destroys the structure you intended to use."
   }
 ];
